@@ -129,5 +129,6 @@ public:
 };
 
 std::vector<std::vector<Point3D>> load_filaments(int period, std::string filename);
+std::vector<std::vector<Point3D>> load_filaments(double filaments[], int period);
 
 #endif

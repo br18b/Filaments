@@ -503,7 +503,23 @@ std::vector<double> spine(const vec3D& P1, const vec3D& P2, double*** field, int
 	return res;
 }
 
+std::vector<double> spine(const vec3D& P1, const vec3D& P2, double* field, int Nx, int Ny, int Nz, double dL) {
+	int N = get_nseg(P1, P2, dL);
+	std::vector<double> res;
+	for (int i = 0; i <= N; i++) {
+		double u = (double)i / ((double)N);
+		vec3D P = P1 * (1 - u) + P2 * u;
+		sanitize_point(P, Nx, Ny, Nz);
+		res.push_back(get_value(field, Nx, Ny, Nz, P));
+	}
+	return res;
+}
+
 std::vector<double> spine(const vec3D& P1, const vec3D& P2, double*** field, int N, double dL) {
+	return spine(P1, P2, field, N, N, N, dL);
+}
+
+std::vector<double> spine(const vec3D& P1, const vec3D& P2, double* field, int N, double dL) {
 	return spine(P1, P2, field, N, N, N, dL);
 }
 
@@ -545,7 +561,21 @@ double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int
 	return val;
 }
 
+double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double normalizing_factor, double* field, int period) {
+	double val = 0;
+	for (int k = 0; k < Nphi; k++) {
+		double phi = 2 * M_PI * k / ((double)Nphi);
+		vec3D P = cylinder_coord(P1, P2, u, r, phi, period);
+		val += get_value(field, period, P) / normalizing_factor;
+	}
+	return val;
+}
+
 double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double*** field, int period) {
+	return angular_average(P1, P2, u, r, Nphi, 1, field, period);
+}
+
+double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double* field, int period) {
 	return angular_average(P1, P2, u, r, Nphi, 1, field, period);
 }
 
@@ -695,6 +725,40 @@ std::vector<std::pair<double, double>> cylinder_radial_avg_norm(const vec3D& P1,
 }
 
 std::vector<std::pair<double, double>> cylinder_radial_avg_norm_constrained(const vec3D& P1, const vec3D& P2, double dL, double dr, double threshold, double*** field, int period) {
+	double L = std::sqrt(::dist2(P1, P2));
+	if (dL <= 0) dL = L / 10;
+	int Nu = get_nseg(P1, P2, dL);
+	if (dr <= 0) dr = - dr * dL;
+	int Nphi = 10;
+	std::vector<std::pair<double, double>> res;
+
+	auto central_values = spine(P1, P2, field, period, dL);
+
+	double value, val;
+	val = 1;
+	res.push_back({ 0,val });
+	double jacobian = 2 * M_PI;
+	int j = 1;
+	double val_min = 1;
+	while ((val >= threshold) && (val <= 1.001) && (val <= val_min)) {
+		if (val_min > val) val_min = val;
+		double r = j * dr;
+		if (r > L) {
+			return res;
+		}
+		val = 0;
+		for (int i = 0; i <= Nu; i++) {
+			double u = (double)i / ((double)Nu);
+			val += angular_average(P1, P2, u, r, Nphi, central_values[i], field, period);
+		}
+		val /= (Nu + 1) * Nphi;
+		res.push_back({ r, val });
+		j++;
+	}
+	return res;
+}
+
+std::vector<std::pair<double, double>> cylinder_radial_avg_norm_constrained(const vec3D& P1, const vec3D& P2, double dL, double dr, double threshold, double* field, int period) {
 	double L = std::sqrt(::dist2(P1, P2));
 	if (dL <= 0) dL = L / 10;
 	int Nu = get_nseg(P1, P2, dL);
@@ -921,6 +985,89 @@ vec3D mean_field(const vec3D& P1, const vec3D& P2, double*** Fx, double*** Fy, d
 }
 
 vec3D mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double*** Fx, double*** Fy, double*** Fz, double period, double dL, double dr, double Nphi) {
+	vec3D res = vec3D(0, 0, 0);
+	int Nu = get_nseg(P1, P2, dL); dL = 1.0 / ((double)Nu);
+	if (dr < 0) dr = -dr * dL;
+	double dphi = 2 * M_PI / ((double)Nphi);
+	double norm = 0; double dV, weight; vec3D P;
+	for (int i = 0; i < Nu; i++) { // this is the integral over a cylinder with weight given by the profile function
+		double u = (i + 0.5) * dL; // midpoint for u variable
+		int j = 1;
+		while (true) { // radial loop starts at the first circle
+			double r = (j + 0.5) * dr;
+			weight = profile(r, param);
+			for (int k = 0; k < Nphi; k++) {
+				double phi = (k + 0.5) * dphi;
+				dV = r * dL * dr * dphi;
+				P = cylinder_coord(P1, P2, u, r, phi, period);
+				res += get_value(Fx, Fy, Fz, period, P) * weight * dV;
+				norm += weight * dV;
+			}
+			if (weight < 1e-3) break;
+			j++;
+		}
+		weight = profile(0, param);
+		dV = M_PI * dr * dr * dL; // the area is that of a circle of radius dr
+		P = cylinder_coord(P1, P2, u, period); // central line has radius 0 and thus no angle needed
+		res += get_value(Fx, Fy, Fz, period, P) * weight * dV;
+		norm += weight * dV;
+	}
+	res /= norm;
+	return res;
+}
+
+double mean_field(const vec3D& P1, const vec3D& P2, double* field, double period, double dL) {
+	double res = 0;
+	int Nu = get_nseg(P1, P2, dL);
+	for (int i = 0; i <= Nu; i++) {
+		double u = i * dL / Nu;
+		vec3D P = cylinder_coord(P1, P2, u, period);
+		res += get_value(field, period, P);
+	}
+	res /= Nu + 1;
+	return res;
+}
+
+double mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double* field, double period, double dL, double dr, double Nphi) {
+	double res = 0;
+	int Nu = get_nseg(P1, P2, dL); dL = 1.0 / ((double)Nu);
+	if (dr < 0) dr = -dr * dL;
+	double dphi = 2 * M_PI / ((double)Nphi);
+	double norm = 0; double dA; vec3D P;
+	for (int i = 0; i < Nu; i++) { // this is the integral over a cylinder with weight given by the profile function
+		double u = (i + 0.5) * dL; // midpoint for u variable
+		int j = 1;
+		while (true) { // radial loop starts at the first circle
+			double r = (j + 0.5) * dr;
+			for (int k = 0; k < Nphi; k++) {
+				double phi = (k + 0.5) * dphi;
+				dA = r * dL * dr * dphi;
+				P = cylinder_coord(P1, P2, u, r, phi, period);
+				res += get_value(field, period, P) * dA;
+				norm += profile(r, param) * dA;
+			}
+		}
+		dA = M_PI * dr * dr;
+		P = cylinder_coord(P1, P2, u, period); // the central line has radius 0 and thus no angle needed
+		res += get_value(field, period, P) * dA; norm += profile(0, param) * dA;
+	}
+	res /= norm;
+	return res;
+}
+
+vec3D mean_field(const vec3D& P1, const vec3D& P2, double* Fx, double* Fy, double* Fz, double period, double dL) {
+	vec3D res = vec3D(0, 0, 0);
+	int Nu = get_nseg(P1, P2, dL);
+	for (int i = 0; i <= Nu; i++) {
+		double u = i * dL / Nu;
+		vec3D P = cylinder_coord(P1, P2, u, period);
+		res += get_value(Fx, Fy, Fz, period, P);
+	}
+	res /= Nu + 1;
+	return res;
+}
+
+vec3D mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double* Fx, double* Fy, double* Fz, double period, double dL, double dr, double Nphi) {
 	vec3D res = vec3D(0, 0, 0);
 	int Nu = get_nseg(P1, P2, dL); dL = 1.0 / ((double)Nu);
 	if (dr < 0) dr = -dr * dL;

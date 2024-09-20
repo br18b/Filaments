@@ -55,6 +55,9 @@ std::vector<double> spine(const vec3D& P1, const vec3D& P2, const std::vector<st
 std::vector<double> spine(const vec3D& P1, const vec3D& P2, double*** field, int Nx, int Ny, int Nz, double dL);
 std::vector<double> spine(const vec3D& P1, const vec3D& P2, double*** field, int N, double dL);
 
+std::vector<double> spine(const vec3D& P1, const vec3D& P2, double* field, int Nx, int Ny, int Nz, double dL);
+std::vector<double> spine(const vec3D& P1, const vec3D& P2, double* field, int N, double dL);
+
 vec3D cylinder_coord(const vec3D& P1, const vec3D& P2, double u, double r, double theta);
 vec3D cylinder_coord(const vec3D& P1, const vec3D& P2, double u);
 vec3D cylinder_coord(const vec3D& P1, const vec3D& P2, double u, double r, double theta, int period);
@@ -63,12 +66,17 @@ vec3D cylinder_coord(const vec3D& P1, const vec3D& P2, double u, int period);
 double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double normalizing_factor, double*** field, int period);
 double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double*** field, int period);
 
+double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double normalizing_factor, double* field, int period);
+double angular_average(const vec3D& P1, const vec3D& P2, double u, double r, int Nphi, double* field, int period);
+
 std::vector<std::vector<double>> cylinder_accumulant(const vec3D& P1, const vec3D& P2, double dL, double dr, double Rmax, double*** field, int period);
 std::vector<std::vector<double>> cylinder_accumulant_normalized(const vec3D& P1, const vec3D& P2, double dL, double dr, double Rmax, double*** field, int period);
 std::vector<std::pair<double, double>> cylinder_accumulant_avg(const vec3D& P1, const vec3D& P2, double dL, double dr, double Rmax, double*** field, int period);
 std::vector<std::pair<double, double>> cylinder_accumulant_avg_norm(const vec3D& P1, const vec3D& P2, double dL, double dr, double Rmax, double*** field, int period);
 std::vector<std::pair<double, double>> cylinder_radial_avg_norm(const vec3D& P1, const vec3D& P2, double dL, double dr, double Rmax, double*** field, int period);
 std::vector<std::pair<double, double>> cylinder_radial_avg_norm_constrained(const vec3D& P1, const vec3D& P2, double dL, double dr, double threshold, double*** field, int period);
+
+std::vector<std::pair<double, double>> cylinder_radial_avg_norm_constrained(const vec3D& P1, const vec3D& P2, double dL, double dr, double threshold, double* field, int period);
 
 void generate_params(const std::vector<double>& param, std::vector<double>& new_param, const std::vector<double>& sigma, const std::vector<std::pair<double, double>>& constraint);
 double fit(const std::vector<std::pair<double, double>>& data, const std::function<double(double, std::vector<double>)>& model, std::vector<double>& param, const std::vector<double>& starting_values, std::vector<double> sigma, const std::vector<std::pair<double, double>>& constraint, const std::function<double(const std::vector<std::pair<double, double>>&, const std::function<double(double, std::vector<double>)>&, const std::vector<double>&)>& dist_fun);
@@ -90,5 +98,11 @@ vec3D mean_field(const vec3D& P1, const vec3D& P2, double*** Fx, double*** Fy, d
 
 double mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double*** field, double period, double dL, double dr, double Nphi);
 vec3D mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double*** Fx, double*** Fy, double*** Fz, double period, double dL, double dr, double Nphi);
+
+double mean_field(const vec3D& P1, const vec3D& P2, double*** field, double period, double dL);
+vec3D mean_field(const vec3D& P1, const vec3D& P2, double* Fx, double* Fy, double* Fz, double period, double dL);
+
+double mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double* field, double period, double dL, double dr, double Nphi);
+vec3D mean_field(const vec3D& P1, const vec3D& P2, const std::function<double(double, std::vector<double>)>& profile, std::vector<double>& param, double* Fx, double* Fy, double* Fz, double period, double dL, double dr, double Nphi);
 
 #endif

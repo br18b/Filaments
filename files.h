@@ -6,8 +6,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <cstdarg>
 
 #include "H5Cpp.h"
+
+#include <fitsio.h>
 
 using namespace H5;
 
@@ -42,11 +46,17 @@ void save_num(double x1, double x2, double x3, double x4, double x5, double x6, 
 void save_num(const std::vector<double>& x, std::string filename);
 void save_num(const std::vector<double>& x, std::ofstream& file_out);
 
+void save_histogram(const std::pair<std::vector<double>, std::vector<double>>& hist, std::string filename);
+
 void save1D(const std::vector<double>& field, std::string filename);
 void save2D(const std::vector<std::vector<double>>& field, std::string filename);
 void save2D(const std::vector<std::pair<double, double>>& field, std::string filename);
 
 int getSize(std::string filename, std::string groupname);
+int getSize(std::string filename);
 int read_from_hdf5(std::string filename, std::string groupname, std::string fieldname, long double res[], int size);
+int read_from_hdf5(std::string filename, std::string fieldname, double res[], int size);
+
+bool read_fits_array(const std::string& filename, double data[]);
 
 #endif

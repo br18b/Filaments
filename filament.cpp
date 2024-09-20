@@ -1058,3 +1058,20 @@ std::vector<std::vector<Point3D>> load_filaments(int period, std::string filenam
 	delete[] filaments;
 	return res;
 }
+
+std::vector<std::vector<Point3D>> load_filaments(double filaments[], int period) {
+	std::vector<std::vector<Point3D>> res;
+	for (int i = 0; i < period; i++) {
+		for (int j = 0; j < period; j++) {
+			for (int k = 0; k < period; k++) {
+				int fil_index = filaments[period * period * i + period * j + k];
+				if (fil_index > 0) {
+					while (res.size() < fil_index) res.push_back({});
+					Point3D p; p.x = i; p.y = j; p.z = k;
+					res[fil_index - 1].push_back(p);
+				}
+			}
+		}
+	}
+	return res;
+}
