@@ -1,0 +1,8 @@
+-samplingDistance       0.25
+-radialSamplingDistance -0.25
+-linearRMSThreshold     0.65
+-minLineLength          0.05
+-radialFraction         0.75
+-radialFitThreshold     0.1
+-resolution             128
+-saveFailed             0

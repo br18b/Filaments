@@ -213,6 +213,100 @@ void save_histogram(const std::pair<std::vector<double>, std::vector<double>>& h
 	file_out.close();
 }
 
+void save_joint_histogram(
+    const std::vector<double>& x_bins,
+    const std::vector<double>& y_bins,
+    const std::vector<std::vector<double>>& hist,
+    const std::string& filename
+) {
+    std::ofstream file_out(filename);
+    if (!file_out.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
+        return;
+    }
+
+    save_num(x_bins, file_out);
+
+    save_num(y_bins, file_out);
+
+    for (const auto& row : hist) {
+        save_num(row, file_out);
+    }
+
+    file_out.close();
+}
+
+void save_joint_histogram(
+    const std::vector<double>& x_bins,
+    const std::vector<double>& y_bins,
+    const std::vector<double>& z_bins,
+    const std::vector<std::vector<std::vector<double>>>& hist,
+    const std::string& filename
+) {
+    std::ofstream file_out(filename);
+    
+    if (!file_out.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing!" << std::endl;
+        return;
+    }
+
+    int nbins_x = x_bins.size() - 1;
+    int nbins_y = y_bins.size() - 1;
+    int nbins_z = z_bins.size() - 1;
+
+	save_num(x_bins, file_out);
+	save_num(y_bins, file_out);
+	save_num(z_bins, file_out);
+
+    for (int i = 0; i < nbins_x; i++) {
+        for (int j = 0; j < nbins_y; j++) {
+            save_num(hist[i][j], file_out);
+        }
+    }
+
+    file_out.close();
+}
+
+void save_joint_histogram_sparse(
+    const std::vector<double>& x_bins,
+    const std::vector<double>& y_bins,
+    const std::vector<double>& z_bins,
+    const std::vector<std::vector<std::vector<double>>>& hist,
+    const std::string& filename
+) {
+    std::ofstream file_out(filename);
+    
+    if (!file_out.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing!" << std::endl;
+        return;
+    }
+
+    int nbins_x = x_bins.size() - 1;
+    int nbins_y = y_bins.size() - 1;
+    int nbins_z = z_bins.size() - 1;
+
+    for (int i = 0; i < nbins_x; i++) {
+		double xmin = x_bins[i]; double xmax = x_bins[i + 1];
+		double x = 0.5 * (xmin + xmax);
+		double dx = xmax - xmin;
+        for (int j = 0; j < nbins_y; j++) {
+			double ymin = y_bins[j]; double ymax = y_bins[j + 1];
+			double y = 0.5 * (ymin + ymax);
+			double dy = ymax - ymin;
+			for (int k = 0; k < nbins_z; k++) {
+				double zmin = z_bins[k]; double zmax = z_bins[k + 1];
+				double z = 0.5 * (zmin + zmax);
+				double dz = zmax - zmin;
+
+				double dV = dx * dy * dz;
+				file_out << x << " " << y << " " << z << " " << hist[i][j][k] / dV << std::endl;
+			}
+        }
+    }
+
+    file_out.close();
+}
+
 void save1D(const std::vector<double>& field, std::string filename) {
 	std::ofstream file_out; file_out.open(filename);
 	for (int i = 0; i < field.size(); i++) {

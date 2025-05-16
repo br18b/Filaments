@@ -47,6 +47,9 @@ void save_num(const std::vector<double>& x, std::string filename);
 void save_num(const std::vector<double>& x, std::ofstream& file_out);
 
 void save_histogram(const std::pair<std::vector<double>, std::vector<double>>& hist, std::string filename);
+void save_joint_histogram(const std::vector<double>& x_bins, const std::vector<double>& y_bins, const std::vector<std::vector<double>>& hist, const std::string& filename);
+void save_joint_histogram(const std::vector<double>& x_bins, const std::vector<double>& y_bins, const std::vector<double>& z_bins, const std::vector<std::vector<std::vector<double>>>& hist, const std::string& filename);
+void save_joint_histogram_sparse(const std::vector<double>& x_bins, const std::vector<double>& y_bins, const std::vector<double>& z_bins, const std::vector<std::vector<std::vector<double>>>& hist, const std::string& filename);
 
 void save1D(const std::vector<double>& field, std::string filename);
 void save2D(const std::vector<std::vector<double>>& field, std::string filename);
